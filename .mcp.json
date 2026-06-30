@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "ado": {
+      "command": "go",
+      "args": ["run", "./cmd/ado", "mcp"]
+    }
+  }
+}

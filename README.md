@@ -1,4 +1,4 @@
-# ado-mcp
+# Azure DevOps MCP Server (ado-mcp)
 
 [![CI](https://github.com/rangertaha/ado-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/rangertaha/ado-mcp/actions/workflows/ci.yml)
 [![Go Reference](https://pkg.go.dev/badge/github.com/rangertaha/ado-mcp.svg)](https://pkg.go.dev/github.com/rangertaha/ado-mcp)
@@ -6,29 +6,62 @@
 [![Go Version](https://img.shields.io/github/go-mod/go-version/rangertaha/ado-mcp)](go.mod)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-A [Model Context Protocol](https://modelcontextprotocol.io) (MCP) server, written in Go, that exposes the **Azure DevOps** REST API (plus **7pace Timetracker**) as tools an LLM client (Claude Desktop/Code, Cursor, …) can call.
-
-📖 **Documentation:** <https://rangertaha.github.io/ado-mcp/>
-
-Broad coverage of Azure DevOps: **193 tools across 32 toolsets** plus **7 workflow prompts** (also ready-made Claude Code slash commands), spanning projects, work items, Git/pull requests, pipelines, releases, test plans, boards, artifacts, wiki, graph/identity, security, service hooks, dashboards, audit, distributed task (variable groups/environments/agent pools), service connections, branch policies, code/work-item/wiki search, process customization, member entitlement, notifications, extensions, TFVC, advanced security alerts, approvals & checks, identities, operations, profile, composite macros, statistics/surveys, a local **work-log journal**, and 7pace time tracking.
-
-A built-in workflow: keep a daily **work-log journal** (stored locally in SQLite under your config directory) and have Claude turn entries into Azure DevOps tickets and 7pace time entries. See the `logs` toolset and the `process_work_log` prompt.
-
-## Features
-
-- **Typed tools with schemas**: every tool has an auto-generated JSON Schema for its input and output, inferred from Go structs, with per-field descriptions. Inputs are validated before a handler runs.
-- **Read-only switch**: `ADO_READONLY=true` hides every mutating tool, so the server can be safely pointed at production.
-- **Toolset filtering**: enable only the areas you need with `ADO_TOOLSETS` to keep the tool list focused.
-- **Multi-host aware**: transparently routes to the Azure DevOps service hosts (`dev.azure.com`, `vssps`, `vsrm`, `feeds`, `auditservice`, `almsearch`, `vsaex`, `extmgmt`, `advsec`).
-- **Built on the official SDK**: uses [`modelcontextprotocol/go-sdk`](https://github.com/modelcontextprotocol/go-sdk) (v1).
+An **Azure DevOps** [Model Context Protocol](https://modelcontextprotocol.io) (MCP) server, written in Go, that exposes the Azure DevOps REST API (plus **7pace Timetracker**) as tools an LLM client (Claude Desktop/Code, Cursor, and others) can call. See the [**Documentation**](https://rangertaha.github.io/ado-mcp/) for more details.
 
 ## Install
+
+Prebuilt binaries are published on the [latest release](https://github.com/rangertaha/ado-mcp/releases/latest). Download the archive for your platform, extract the `ado` binary, and put it on your `PATH`:
+
+| Platform | Architecture          | Download (latest)                                                                                                            |
+| -------- | --------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| macOS    | Apple Silicon (arm64) | [`ado-mcp_darwin_arm64.tar.gz`](https://github.com/rangertaha/ado-mcp/releases/latest/download/ado-mcp_darwin_arm64.tar.gz) |
+| macOS    | Intel (amd64)         | [`ado-mcp_darwin_amd64.tar.gz`](https://github.com/rangertaha/ado-mcp/releases/latest/download/ado-mcp_darwin_amd64.tar.gz) |
+| Linux    | amd64                 | [`ado-mcp_linux_amd64.tar.gz`](https://github.com/rangertaha/ado-mcp/releases/latest/download/ado-mcp_linux_amd64.tar.gz)   |
+| Linux    | arm64                 | [`ado-mcp_linux_arm64.tar.gz`](https://github.com/rangertaha/ado-mcp/releases/latest/download/ado-mcp_linux_arm64.tar.gz)   |
+| Windows  | amd64                 | [`ado-mcp_windows_amd64.zip`](https://github.com/rangertaha/ado-mcp/releases/latest/download/ado-mcp_windows_amd64.zip)     |
+| Windows  | arm64                 | [`ado-mcp_windows_arm64.zip`](https://github.com/rangertaha/ado-mcp/releases/latest/download/ado-mcp_windows_arm64.zip)     |
+
+Each link always resolves to the newest release. A [`checksums.txt`](https://github.com/rangertaha/ado-mcp/releases/latest/download/checksums.txt) is published alongside the archives.
+
+<details>
+<summary><strong>macOS / Linux</strong></summary>
+
+Pick your `OS`/`ARCH`:
+
+```sh
+OS=darwin ARCH=arm64   # OS: darwin|linux   ARCH: amd64|arm64
+curl -sSL "https://github.com/rangertaha/ado-mcp/releases/latest/download/ado-mcp_${OS}_${ARCH}.tar.gz" | tar -xz ado
+sudo mv ado /usr/local/bin/
+ado --version
+```
+
+</details>
+
+<details>
+<summary><strong>Windows (PowerShell)</strong></summary>
+
+Pick your `$Arch`:
+
+```powershell
+$Arch = "amd64"   # ARCH: amd64|arm64
+Invoke-WebRequest "https://github.com/rangertaha/ado-mcp/releases/latest/download/ado-mcp_windows_${Arch}.zip" -OutFile ado.zip
+Expand-Archive ado.zip -DestinationPath .
+.\ado.exe --version
+```
+
+</details>
+
+<details>
+<summary><strong>Install with Go</strong></summary>
 
 ```sh
 go install github.com/rangertaha/ado-mcp/cmd/ado@latest
 ```
 
-This produces an `ado` binary. Or build from source:
+</details>
+
+<details>
+<summary><strong>Build from source</strong></summary>
 
 ```sh
 git clone https://github.com/rangertaha/ado-mcp
@@ -36,17 +69,20 @@ cd ado-mcp
 make build        # produces ./bin/ado
 ```
 
-## CLI
+</details>
 
-`ado` is a small command tree (built on urfave/cli):
+Broad coverage of Azure DevOps: **192 tools across 32 toolsets** plus **7 workflow prompts** (surfaced as slash commands by MCP clients), spanning projects, work items, Git/pull requests, pipelines, releases, test plans, boards, artifacts, wiki, graph/identity, security, service hooks, dashboards, audit, distributed task (variable groups/environments/agent pools), service connections, branch policies, code/work-item/wiki search, process customization, member entitlement, notifications, extensions, TFVC, advanced security alerts, approvals & checks, identities, operations, profile, composite macros, statistics/surveys, a local **work-log journal**, and 7pace time tracking.
 
-- `ado mcp`: run the MCP server over stdio. This is what MCP clients (Claude Desktop/Code, Cursor) invoke.
-- `ado test`: verify connectivity and credentials against Azure DevOps (calls the profile endpoint and prints the authenticated user).
-- `ado log`: manage the local SQLite work-log journal. These commands do not require Azure DevOps credentials.
-  - `ado log add "<summary>" [--date YYYY-MM-DD] [--minutes|-m N] [--project|-p NAME] [--work-item|-w ID] [--activity|-a NAME] [--tags CSV]`: add an entry (summary is positional).
-  - `ado log list [--date] [--from] [--to] [--limit N] [--unlogged]`: list entries, newest first.
-  - `ado log update <id> [--summary|-s] [--date] [--minutes] [--project] [--work-item] [--activity] [--tags] [--ticket-created] [--hours-logged]`: update fields.
-  - `ado log delete <id>` (alias `rm`): delete an entry.
+A built-in workflow: keep a daily **work-log journal** (stored locally in SQLite under your config directory) and have Claude turn entries into Azure DevOps tickets and 7pace time entries. See the `logs` toolset and the `process_work_log` prompt.
+
+## Features
+
+- **Azure DevOps, 7pace, and local logs**: the Azure DevOps REST API and 7pace Timetracker exposed as tools, plus an optional local **work-log journal** stored in SQLite (experimental).
+- **Typed tools with schemas**: every tool has an auto-generated JSON Schema for its input and output, inferred from Go structs, with per-field descriptions. Inputs are validated before a handler runs.
+- **Read-only switch**: `ADO_READONLY=true` hides every mutating tool, so the server can be safely pointed at production.
+- **Toolset filtering**: enable only the areas you need with `ADO_TOOLSETS` to keep the tool list focused.
+- **Multi-host aware**: transparently routes to the Azure DevOps service hosts (`dev.azure.com`, `vssps`, `vsrm`, `feeds`, `auditservice`, `almsearch`, `vsaex`, `extmgmt`, `advsec`).
+- **Built on the official SDK**: uses [`modelcontextprotocol/go-sdk`](https://github.com/modelcontextprotocol/go-sdk) (v1).
 
 ## Configuration
 
@@ -56,13 +92,14 @@ All configuration is read from the environment.
 | ------------------ | :------: | --------------------------------------------------------------------------- |
 | `ADO_ORG_URL`      |   yes    | Organization URL, e.g. `https://dev.azure.com/myorg`.                        |
 | `ADO_PAT`          |   yes    | Azure DevOps [Personal Access Token](https://learn.microsoft.com/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate). Sent via Basic auth. |
-| `SEVENPACE_ORG`    |    no    | 7pace account name; builds `https://{org}.timehub.7pace.com/api`.            |
+| `SEVENPACE_ORG`    |    no    | 7pace account name; builds `https://{org}.timehub.7pace.com/api/odata/{version}`. |
+| `SEVENPACE_API_BASE` |  no    | Full 7pace API base URL; overrides the URL derived from `SEVENPACE_ORG`.     |
 | `SEVENPACE_TOKEN`  |    no    | 7pace bearer token (*Settings → Reporting and API*). Enables 7pace tools.   |
 | `ADO_TOOLSETS`     |    no    | Comma-separated toolset names to enable, or `all` (default).                 |
-| `ADO_READONLY`     |    no    | `true` to expose only read-only tools.                                       |
+| `ADO_READONLY`     |    no    | Truthy (`1`, `true`, `yes`, `on`) to expose only read-only tools.            |
 | `ADO_MCP_HOME`     |    no    | Override the app directory (default: `<user config dir>/ado-mcp`, e.g. `~/.config/ado-mcp`). The work-log SQLite database lives in `data/` within it. |
 
-7pace is optional: its tools register only when **both** `SEVENPACE_ORG` and `SEVENPACE_TOKEN` are set.
+7pace is optional: its tools register only when `SEVENPACE_TOKEN` is set together with either `SEVENPACE_ORG` or `SEVENPACE_API_BASE`.
 
 ### Use with Claude Desktop / Claude Code
 
@@ -89,9 +126,29 @@ For Claude Code: `claude mcp add ado --env ADO_ORG_URL=... --env ADO_PAT=... -- 
 
 ### Local development
 
-The repo ships a committed [`.mcp.json`](.mcp.json) that runs the server straight from source (`go run ./cmd/ado mcp`), so changes take effect on the next session without a build step. It reads credentials from your environment (no secrets in the repo). Run `cp .env.example .env` and fill it in, or export `ADO_ORG_URL` and `ADO_PAT` (and optionally `SEVENPACE_ORG`/`SEVENPACE_TOKEN`) before launching Claude Code in this directory. The server is auto-trusted via `"enableAllProjectMcpServers": true` in the committed `.claude/settings.json`.
+The repo ships a committed [`.mcp.json`](.mcp.json) that runs the server straight from source (`go run ./cmd/ado mcp`), so changes take effect on the next session without a build step. It reads credentials from your environment (no secrets in the repo). Run `cp .env.example .env` and fill it in, or export `ADO_ORG_URL` and `ADO_PAT` (and optionally `SEVENPACE_ORG`/`SEVENPACE_TOKEN`) before launching Claude Code in this directory. A local `.claude/settings.local.json` auto-trusts the server via `"enableAllProjectMcpServers": true`.
+
+## CLI
+
+<details>
+<summary>The <code>ado</code> command tree (mcp, test, log)</summary>
+
+`ado` is a small command tree (built on urfave/cli):
+
+- `ado mcp`: run the MCP server over stdio. This is what MCP clients (Claude Desktop/Code, Cursor) invoke.
+- `ado test`: verify connectivity and credentials against Azure DevOps (calls the profile endpoint and prints the authenticated user).
+- `ado log`: manage the local SQLite work-log journal. These commands do not require Azure DevOps credentials.
+  - `ado log add "<summary>" [--date YYYY-MM-DD] [--minutes|-m N] [--project|-p NAME] [--work-item|-w ID] [--activity|-a NAME] [--tags CSV]`: add an entry (summary is positional).
+  - `ado log list [--date] [--from] [--to] [--limit N] [--unlogged]`: list entries, newest first.
+  - `ado log update <id> [--summary|-s] [--date] [--minutes] [--project] [--work-item] [--activity] [--tags] [--ticket-created] [--hours-logged]`: update fields.
+  - `ado log delete <id>` (alias `rm`): delete an entry.
+
+</details>
 
 ## Toolsets
+
+<details>
+<summary>All 32 toolsets</summary>
 
 Pass any subset to `ADO_TOOLSETS` (e.g. `ADO_TOOLSETS=core,wit,git`). 7pace uses the toolset name `sevenpace`.
 
@@ -128,14 +185,16 @@ Pass any subset to `ADO_TOOLSETS` (e.g. `ADO_TOOLSETS=core,wit,git`). 7pace uses
 | `macros`       | dev.azure.com  | composite tools: complete PR, create bug, publish wiki page (+images) |
 | `stats`        | dev.azure.com  | surveys: contributors (repo/project/org), PR/work-item/build stats |
 | `logs`         | local (SQLite) | daily work-log journal: add/list/get/update/delete entries      |
-| `sevenpace`    | timehub.7pace  | current user, users, activity types, worklogs (CRUD)            |
+| `sevenpace`    | timehub.7pace  | worklogs, worklog↔work-item joins, work-item time rollups, budgets, raw OData query (read-only) |
+
+</details>
 
 ## Tools
 
 Tools follow the naming convention `<toolset>_<verb>_<noun>`. Tools marked **[write]** mutate data and are hidden when `ADO_READONLY=true`.
 
 <details>
-<summary><strong>All 193 tools</strong></summary>
+<summary><strong>All 192 tools</strong></summary>
 
 ### core
 - `core_get_project`: Get a single Azure DevOps project by name or ID.
@@ -383,20 +442,23 @@ Tools follow the naming convention `<toolset>_<verb>_<noun>`. Tools marked **[wr
 - `logs_delete` **[write]**: Delete a work-log entry by ID.
 - `logs_get`: Get a single work-log entry by ID.
 - `logs_list`: List work-log entries, newest first. Filter by an exact date, a date range, or only entries whose hours have not yet been logged to 7pace.
+- `logs_summary`: Aggregate work-log entries over a date or date range: total entries and minutes/hours, tickets created, hours logged, plus per-day and per-project breakdowns.
 - `logs_update` **[write]**: Update fields of a work-log entry, including marking that a ticket was created or hours were logged. Omitted fields are left unchanged.
 
 ### sevenpace
-- `sevenpace_create_worklog` **[write]**: Create a 7pace worklog (time entry) against a work item.
-- `sevenpace_delete_worklog` **[write]**: Delete a 7pace worklog by ID.
-- `sevenpace_list_activity_types`: List the 7pace activity types (e.g. Development, Testing).
-- `sevenpace_list_users`: List all 7pace Timetracker users.
-- `sevenpace_list_worklogs`: List 7pace worklogs (time entries). Filter with an OData $filter expression such as "Timestamp ge 2026-01-01T00:00:00Z".
-- `sevenpace_me`: Get the currently authenticated 7pace Timetracker user.
-- `sevenpace_update_worklog` **[write]**: Update an existing 7pace worklog.
+The 7pace Reporting OData API is read-only, so all of these are reads.
+- `sevenpace_list_worklogs`: List 7pace worklogs (the workLogsOnly entity). Filter with an OData $filter such as "Timestamp ge 2026-01-01T00:00:00Z".
+- `sevenpace_list_worklog_workitems`: List 7pace worklogs joined with their Azure DevOps work items (the workLogsWorkItems entity). Supports an OData $filter.
+- `sevenpace_list_work_items`: List work items with their rolled-up tracked time (the workItems entity). Supports an OData $filter.
+- `sevenpace_list_budgets`: List the configured 7pace budgets.
+- `sevenpace_query`: Run a raw GET against the 7pace Reporting OData API and return the response body. Use for entity sets or options not covered by the other tools, or path "$metadata" to inspect the schema.
 
 </details>
 
 ## Prompts (workflows)
+
+<details>
+<summary>Prompts and composite macros</summary>
 
 MCP has no dedicated "workflow" primitive, so multi-step flows are shipped two ways:
 
@@ -412,7 +474,7 @@ MCP has no dedicated "workflow" primitive, so multi-step flows are shipped two w
 | `process_work_log` | date, project | Turn daily work-log journal entries into ADO tickets and 7pace time entries |
 | `log_my_day` | date, totalHours | List my active work items and log 7pace time against them |
 
-The same workflows ship as **Claude Code slash commands** in [`.claude/commands/`](.claude/commands) (`/ado-triage-bug`, `/ado-review-pr`, `/ado-sprint-status`, `/ado-explore-repo`, `/ado-update-wiki`, `/ado-log-day`); copy that directory into any repo that uses the server.
+MCP clients surface these prompts as **slash commands** automatically (e.g. in Claude Code and Claude Desktop), so each is available as a slash command named after the prompt once the server is connected.
 
 **Composite macro tools** (`macros` toolset): single tools that orchestrate several REST calls server-side, for flows that are awkward one call at a time:
 
@@ -420,7 +482,12 @@ The same workflows ship as **Claude Code slash commands** in [`.claude/commands/
 - `macro_create_bug`: creates a Bug from common fields and optionally adds a comment in one call.
 - `macro_publish_wiki_page`: creates or updates a wiki page and reports which it did.
 
+</details>
+
 ## Architecture
+
+<details>
+<summary>Project layout</summary>
 
 ```
 cmd/ado                entrypoint: a urfave/cli command tree (mcp, test, log)
@@ -436,7 +503,12 @@ The `mcp` subcommand loads config, registers the enabled toolsets, and serves ov
 
 Each service area follows the same shape: a `service` wrapping the shared REST clients exposes typed operations, and a `Register` function registers thin MCP tool handlers for them. Adding a new area is a matter of dropping in a package and listing it in `cmd/ado`.
 
+</details>
+
 ## Development
+
+<details>
+<summary>Build, test, and smoke-test</summary>
 
 ```sh
 make test        # go test -race ./...
@@ -462,6 +534,8 @@ Or browse interactively with the [MCP Inspector](https://github.com/modelcontext
 ```sh
 npx @modelcontextprotocol/inspector ./bin/ado mcp
 ```
+
+</details>
 
 ## Changelog
 

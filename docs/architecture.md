@@ -20,7 +20,7 @@ Each service area follows the same shape: a `service` wrapping the shared REST c
 make test        # go test -race ./...
 make vet         # go vet ./...
 make fmt-check   # gofmt verification
-make all         # fmt-check + vet + test + build
+make all         # fmt-check + vet + lint + test + build
 ```
 
 ## Smoke-testing the protocol

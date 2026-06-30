@@ -49,7 +49,7 @@ Thumbs.db
 desktop.ini
 
 # Local Claude settings, but keep the project's shared settings & slash commands
-/.claude
+.claude
 !/.claude/commands/
 !/.claude/settings.json
 .claude/settings.local.json

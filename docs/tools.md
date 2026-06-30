@@ -2,7 +2,7 @@
 
 Tools follow the naming convention `<toolset>_<verb>_<noun>`. Tools marked **[write]** mutate data and are hidden when `ADO_READONLY=true`.
 
-All 193 tools:
+All 192 tools:
 
 ### core
 - `core_get_project`: Get a single Azure DevOps project by name or ID.
@@ -250,13 +250,13 @@ All 193 tools:
 - `logs_delete` **[write]**: Delete a work-log entry by ID.
 - `logs_get`: Get a single work-log entry by ID.
 - `logs_list`: List work-log entries, newest first. Filter by an exact date, a date range, or only entries whose hours have not yet been logged to 7pace.
+- `logs_summary`: Aggregate work-log entries over a date or date range: total entries and minutes/hours, tickets created, hours logged, plus per-day and per-project breakdowns.
 - `logs_update` **[write]**: Update fields of a work-log entry, including marking that a ticket was created or hours were logged. Omitted fields are left unchanged.
 
 ### sevenpace
-- `sevenpace_create_worklog` **[write]**: Create a 7pace worklog (time entry) against a work item.
-- `sevenpace_delete_worklog` **[write]**: Delete a 7pace worklog by ID.
-- `sevenpace_list_activity_types`: List the 7pace activity types (e.g. Development, Testing).
-- `sevenpace_list_users`: List all 7pace Timetracker users.
-- `sevenpace_list_worklogs`: List 7pace worklogs (time entries). Filter with an OData $filter expression such as "Timestamp ge 2026-01-01T00:00:00Z".
-- `sevenpace_me`: Get the currently authenticated 7pace Timetracker user.
-- `sevenpace_update_worklog` **[write]**: Update an existing 7pace worklog.
+The 7pace Reporting OData API is read-only, so all of these are reads.
+- `sevenpace_list_worklogs`: List 7pace worklogs (the workLogsOnly entity). Filter with an OData $filter such as "Timestamp ge 2026-01-01T00:00:00Z".
+- `sevenpace_list_worklog_workitems`: List 7pace worklogs joined with their Azure DevOps work items (the workLogsWorkItems entity). Supports an OData $filter.
+- `sevenpace_list_work_items`: List work items with their rolled-up tracked time (the workItems entity). Supports an OData $filter.
+- `sevenpace_list_budgets`: List the configured 7pace budgets.
+- `sevenpace_query`: Run a raw GET against the 7pace Reporting OData API and return the response body. Use for entity sets or options not covered by the other tools, or path "$metadata" to inspect the schema.

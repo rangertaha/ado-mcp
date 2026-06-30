@@ -14,7 +14,7 @@ MCP has no dedicated "workflow" primitive, so multi-step flows are shipped two w
 | `process_work_log` | date, project | Turn daily work-log journal entries into ADO tickets and 7pace time entries |
 | `log_my_day` | date, totalHours | List my active work items and log 7pace time against them |
 
-The same workflows ship as **Claude Code slash commands** in [`.claude/commands/`](https://github.com/rangertaha/ado-mcp/tree/main/.claude/commands) (`/ado-triage-bug`, `/ado-review-pr`, `/ado-sprint-status`, `/ado-explore-repo`, `/ado-update-wiki`, `/ado-log-day`). Copy that directory into any repo that uses the server.
+MCP clients surface these prompts as **slash commands** automatically (e.g. in Claude Code and Claude Desktop), so each is available as a slash command named after the prompt once the server is connected.
 
 **Composite macro tools** (`macros` toolset) are single tools that orchestrate several REST calls server-side, for flows that are awkward one call at a time:
 

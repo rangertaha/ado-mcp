@@ -35,6 +35,6 @@ Pass any subset to `ADO_TOOLSETS` (e.g. `ADO_TOOLSETS=core,wit,git`). 7pace uses
 | `macros`       | dev.azure.com  | composite tools: complete PR, create bug, publish wiki page (+images) |
 | `stats`        | dev.azure.com  | surveys: contributors (repo/project/org), PR/work-item/build stats |
 | `logs`         | local (SQLite) | daily work-log journal: add/list/get/update/delete entries      |
-| `sevenpace`    | timehub.7pace  | current user, users, activity types, worklogs (CRUD)            |
+| `sevenpace`    | timehub.7pace  | worklogs, worklog↔work-item joins, work-item time rollups, budgets, raw OData query (read-only) |
 
 See the full [Tools](tools.md) list for the individual tools in each toolset.
